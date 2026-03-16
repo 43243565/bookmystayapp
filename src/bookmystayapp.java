@@ -1,8 +1,8 @@
 /**
  * Book My Stay App
  * Hotel Booking Management System
- * @author SHIVANSH DHINGRA
- * @version 10.0
+ * @author SHivam puri
+ * @version 11.0
  */
 
 import java.util.*;
@@ -28,81 +28,61 @@ class RoomInventory {
         inventory.put("Suite Room", 1);
     }
 
-    int getAvailability(String type) {
-        return inventory.get(type);
-    }
+    synchronized boolean bookRoom(String type) {
 
-    void decreaseAvailability(String type) {
-        inventory.put(type, inventory.get(type) - 1);
-    }
+        if (inventory.get(type) > 0) {
+            inventory.put(type, inventory.get(type) - 1);
+            return true;
+        }
 
-    void increaseAvailability(String type) {
-        inventory.put(type, inventory.get(type) + 1);
+        return false;
     }
 }
 
-class BookingService {
+class BookingTask implements Runnable {
 
-    HashMap<String, Reservation> activeBookings;
+    Reservation reservation;
+    RoomInventory inventory;
 
-    BookingService() {
-        activeBookings = new HashMap<>();
+    BookingTask(Reservation reservation, RoomInventory inventory) {
+        this.reservation = reservation;
+        this.inventory = inventory;
     }
 
-    void confirmBooking(Reservation r, RoomInventory inventory) {
+    public void run() {
 
-        if (inventory.getAvailability(r.roomType) > 0) {
+        if (inventory.bookRoom(reservation.roomType)) {
 
-            activeBookings.put(r.guestName, r);
-            inventory.decreaseAvailability(r.roomType);
-
-            System.out.println("Booking Confirmed");
-            System.out.println("Guest: " + r.guestName);
-            System.out.println("Room Type: " + r.roomType);
+            System.out.println("Booking Successful for " + reservation.guestName);
+            System.out.println("Room Type: " + reservation.roomType);
+            System.out.println("Thread: " + Thread.currentThread().getName());
             System.out.println();
 
         } else {
-            System.out.println("No rooms available for " + r.guestName);
-            System.out.println();
-        }
-    }
 
-    void cancelBooking(String guestName, RoomInventory inventory) {
-
-        Reservation r = activeBookings.get(guestName);
-
-        if (r != null) {
-
-            inventory.increaseAvailability(r.roomType);
-            activeBookings.remove(guestName);
-
-            System.out.println("Booking Cancelled for " + guestName);
-            System.out.println("Room Type Released: " + r.roomType);
-            System.out.println();
-
-        } else {
-            System.out.println("No booking found for " + guestName);
+            System.out.println("Booking Failed for " + reservation.guestName);
+            System.out.println("No rooms available (" + reservation.roomType + ")");
+            System.out.println("Thread: " + Thread.currentThread().getName());
             System.out.println();
         }
     }
 }
 
-public class UseCase10BookingCancellationRollback {
+public class UseCase11ConcurrentBookingSimulation {
     public static void main(String[] args) {
 
         System.out.println("Book My Stay");
         System.out.println("Hotel Booking Management System");
-        System.out.println("Version 10.0");
+        System.out.println("Version 11.0");
 
         RoomInventory inventory = new RoomInventory();
-        BookingService bookingService = new BookingService();
 
-        Reservation r1 = new Reservation("Aman", "Single Room");
-        Reservation r2 = new Reservation("Neha", "Double Room");
+        Thread t1 = new Thread(new BookingTask(new Reservation("Aman", "Single Room"), inventory));
+        Thread t2 = new Thread(new BookingTask(new Reservation("Neha", "Single Room"), inventory));
+        Thread t3 = new Thread(new BookingTask(new Reservation("Rahul", "Single Room"), inventory));
 
-        bookingService.confirmBooking(r1, inventory);
-        bookingService.confirmBooking(r2, inventory);
-
-        bookingService.cancelBooking("Aman", inventory);
+        t1.start();
+        t2.start();
+        t3.start();
     }
 }
