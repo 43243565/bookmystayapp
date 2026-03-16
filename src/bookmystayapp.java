@@ -1,8 +1,8 @@
 /**
  * Book My Stay App
  * Hotel Booking Management System
- * @author SHIVANSH DHINGRAgit add .
- * @version 8.0
+ * @author SHIVANSH DHINGRA
+ * @version 9.0
  */
 
 import java.util.*;
@@ -17,69 +17,82 @@ class Reservation {
     }
 }
 
-class BookingHistory {
+class Validator {
 
-    List<Reservation> history;
+    boolean validateReservation(Reservation r) {
 
-    BookingHistory() {
-        history = new ArrayList<>();
+        if (r.guestName == null || r.guestName.trim().isEmpty()) {
+            System.out.println("Error: Guest name cannot be empty.");
+            System.out.println();
+            return false;
+        }
+
+        if (r.roomType == null || r.roomType.trim().isEmpty()) {
+            System.out.println("Error: Room type must be selected.");
+            System.out.println();
+            return false;
+        }
+
+        return true;
+    }
+}
+
+class BookingService {
+
+    Set<String> validRoomTypes;
+
+    BookingService() {
+        validRoomTypes = new HashSet<>();
+        validRoomTypes.add("Single Room");
+        validRoomTypes.add("Double Room");
+        validRoomTypes.add("Suite Room");
     }
 
-    void addBooking(Reservation r) {
-        history.add(r);
-    }
+    void processBooking(Reservation r) {
 
-    void showAllBookings() {
+        try {
 
-        System.out.println("Booking History Report");
-        System.out.println("----------------------");
+            if (!validRoomTypes.contains(r.roomType)) {
+                throw new IllegalArgumentException("Invalid room type selected.");
+            }
 
-        for (Reservation r : history) {
+            System.out.println("Reservation Successful");
             System.out.println("Guest Name: " + r.guestName);
             System.out.println("Room Type: " + r.roomType);
+            System.out.println();
+
+        } catch (IllegalArgumentException e) {
+
+            System.out.println("Booking Failed: " + e.getMessage());
             System.out.println();
         }
     }
 }
 
-class ReportService {
-
-    void generateSummary(List<Reservation> history) {
-
-        HashMap<String, Integer> roomCount = new HashMap<>();
-
-        for (Reservation r : history) {
-            roomCount.put(r.roomType, roomCount.getOrDefault(r.roomType, 0) + 1);
-        }
-
-        System.out.println("Booking Summary Report");
-        System.out.println("----------------------");
-
-        for (String room : roomCount.keySet()) {
-            System.out.println(room + " Bookings: " + roomCount.get(room));
-        }
-
-        System.out.println();
-    }
-}
-
-public class UseCase8BookingHistoryReporting {
+public class UseCase9ErrorHandlingValidation {
     public static void main(String[] args) {
 
         System.out.println("Book My Stay");
         System.out.println("Hotel Booking Management System");
-        System.out.println("Version 8.0");
+        System.out.println("Version 9.0");
 
-        BookingHistory bookingHistory = new BookingHistory();
-        ReportService reportService = new ReportService();
+        Validator validator = new Validator();
+        BookingService bookingService = new BookingService();
 
-        bookingHistory.addBooking(new Reservation("Aman", "Single Room"));
-        bookingHistory.addBooking(new Reservation("Neha", "Double Room"));
-        bookingHistory.addBooking(new Reservation("Rahul", "Suite Room"));
-        bookingHistory.addBooking(new Reservation("Priya", "Single Room"));
+        Reservation r1 = new Reservation("Aman", "Single Room");
+        Reservation r2 = new Reservation("", "Double Room");
+        Reservation r3 = new Reservation("Rahul", "Luxury Room");
 
-        bookingHistory.showAllBookings();
+        if (validator.validateReservation(r1)) {
+            bookingService.processBooking(r1);
+        }
 
-        reportService.generateSummary(bookingHistory.history);
+        if (validator.validateReservation(r2)) {
+            bookingService.processBooking(r2);
+        }
+
+        if (validator.validateReservation(r3)) {
+            bookingService.processBooking(r3);
+        }
     }
 }
