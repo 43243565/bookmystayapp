@@ -2,7 +2,7 @@
  * Book My Stay App
  * Hotel Booking Management System
  * @author SHIVANSH DHINGRA
- * @version 9.0
+ * @version 10.0
  */
 
 import java.util.*;
@@ -17,82 +17,92 @@ class Reservation {
     }
 }
 
-class Validator {
+class RoomInventory {
 
-    boolean validateReservation(Reservation r) {
+    HashMap<String, Integer> inventory;
 
-        if (r.guestName == null || r.guestName.trim().isEmpty()) {
-            System.out.println("Error: Guest name cannot be empty.");
-            System.out.println();
-            return false;
-        }
+    RoomInventory() {
+        inventory = new HashMap<>();
+        inventory.put("Single Room", 2);
+        inventory.put("Double Room", 2);
+        inventory.put("Suite Room", 1);
+    }
 
-        if (r.roomType == null || r.roomType.trim().isEmpty()) {
-            System.out.println("Error: Room type must be selected.");
-            System.out.println();
-            return false;
-        }
+    int getAvailability(String type) {
+        return inventory.get(type);
+    }
 
-        return true;
+    void decreaseAvailability(String type) {
+        inventory.put(type, inventory.get(type) - 1);
+    }
+
+    void increaseAvailability(String type) {
+        inventory.put(type, inventory.get(type) + 1);
     }
 }
 
 class BookingService {
 
-    Set<String> validRoomTypes;
+    HashMap<String, Reservation> activeBookings;
 
     BookingService() {
-        validRoomTypes = new HashSet<>();
-        validRoomTypes.add("Single Room");
-        validRoomTypes.add("Double Room");
-        validRoomTypes.add("Suite Room");
+        activeBookings = new HashMap<>();
     }
 
-    void processBooking(Reservation r) {
+    void confirmBooking(Reservation r, RoomInventory inventory) {
 
-        try {
+        if (inventory.getAvailability(r.roomType) > 0) {
 
-            if (!validRoomTypes.contains(r.roomType)) {
-                throw new IllegalArgumentException("Invalid room type selected.");
-            }
+            activeBookings.put(r.guestName, r);
+            inventory.decreaseAvailability(r.roomType);
 
-            System.out.println("Reservation Successful");
-            System.out.println("Guest Name: " + r.guestName);
+            System.out.println("Booking Confirmed");
+            System.out.println("Guest: " + r.guestName);
             System.out.println("Room Type: " + r.roomType);
             System.out.println();
 
-        } catch (IllegalArgumentException e) {
+        } else {
+            System.out.println("No rooms available for " + r.guestName);
+            System.out.println();
+        }
+    }
 
-            System.out.println("Booking Failed: " + e.getMessage());
+    void cancelBooking(String guestName, RoomInventory inventory) {
+
+        Reservation r = activeBookings.get(guestName);
+
+        if (r != null) {
+
+            inventory.increaseAvailability(r.roomType);
+            activeBookings.remove(guestName);
+
+            System.out.println("Booking Cancelled for " + guestName);
+            System.out.println("Room Type Released: " + r.roomType);
+            System.out.println();
+
+        } else {
+            System.out.println("No booking found for " + guestName);
             System.out.println();
         }
     }
 }
 
-public class UseCase9ErrorHandlingValidation {
+public class UseCase10BookingCancellationRollback {
     public static void main(String[] args) {
 
         System.out.println("Book My Stay");
         System.out.println("Hotel Booking Management System");
-        System.out.println("Version 9.0");
+        System.out.println("Version 10.0");
 
-        Validator validator = new Validator();
+        RoomInventory inventory = new RoomInventory();
         BookingService bookingService = new BookingService();
 
         Reservation r1 = new Reservation("Aman", "Single Room");
-        Reservation r2 = new Reservation("", "Double Room");
-        Reservation r3 = new Reservation("Rahul", "Luxury Room");
+        Reservation r2 = new Reservation("Neha", "Double Room");
 
-        if (validator.validateReservation(r1)) {
-            bookingService.processBooking(r1);
-        }
+        bookingService.confirmBooking(r1, inventory);
+        bookingService.confirmBooking(r2, inventory);
 
-        if (validator.validateReservation(r2)) {
-            bookingService.processBooking(r2);
-        }
-
-        if (validator.validateReservation(r3)) {
-            bookingService.processBooking(r3);
-        }
+        bookingService.cancelBooking("Aman", inventory);
     }
 }
